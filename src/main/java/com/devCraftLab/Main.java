@@ -1,17 +1,27 @@
 package com.devCraftLab;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import com.devCraftLab.studentapp.model.Student;
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+        System.out.println("========================================");
+        System.out.println("    Plain Java Student Application     ");
+        System.out.println("========================================\n");
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-        }
+        // Way 1: Using default constructor + setters
+        Student student1 = new Student();
+        student1.setId(1);
+        student1.setName("Rahim Khan");
+        student1.setCourse("Computer Science");
+        student1.setAge(22);
+
+        // Way 2: Using parameterized constructor
+        Student student2 = new Student(2, "Karim Ahmed", "Software Engineering", 23);
+
+        // Display
+        System.out.println("Student 1: " + student1);
+        System.out.println("Student 2: " + student2);
+
+        System.out.println("\n========================================");
     }
 }
