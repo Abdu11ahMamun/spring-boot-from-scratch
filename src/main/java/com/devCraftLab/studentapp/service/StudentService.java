@@ -1,60 +1,86 @@
 package com.devCraftLab.studentapp.service;
 
 import com.devCraftLab.studentapp.model.Student;
+import com.devCraftLab.studentapp.repository.StudentRepository;
+import com.devCraftLab.studentapp.repository.impl.StudentRepositoryImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class StudentService {
-    private List<Student> students;
+    // Dependency: Repository
+    private StudentRepository repository;
+
+    // Constructor - manually creating repository
     public StudentService() {
-        this.students = new ArrayList<>();
-        System.out.println("StudentService initialized.");
+        this.repository = new StudentRepositoryImpl();
+        System.out.println("✅ StudentService initialized!");
     }
-    public void addStudent(Student student) {
-        students.add(student);
-        System.out.println("Added student: " + student.getName());
+
+    public boolean addStudent(Student student) {
+        if (student.getAge()<18){
+            System.out.println("❌ Student must be at least 18 years old.");
+            return false;
+        }
+        if (student.getName() == null || student.getName().isEmpty()) {
+            System.out.println("❌ Student name cannot be empty.");
+            return false;
+        }
+        Student savedStudent = repository.save(student);
+        return savedStudent != null;
+
     }
     public List<Student> getAllStudents() {
-        return students;
+        return repository.findAll();
     }
+
     public Student getStudentById(int id) {
-        for (Student student : students) {
-            if (student.getId() == id) {
-                return student;
-            }
-        }
-        return null;
+        return repository.findById(id);
     }
+
     public boolean updateStudentCourse(int id, String newCourse) {
         Student student = getStudentById(id);
-        if (student != null) {
-            student.setCourse(newCourse);
-            System.out.println("Updated student ID " + id + " to course " + newCourse);
-            return true;
+       if (student == null) {
+           System.out.println("❌ Student not found with ID: " + id);
+           return false;
+       }
+         student.setCourse(newCourse);
+        Student updatedStudent = repository.update(student);
+        return updatedStudent != null;
+    }
+    public boolean updateStudent(Student student) {
+        // Business validation
+        if (student.getAge() < 18) {
+            System.out.println("❌ Student must be at least 18 years old!");
+            return false;
         }
-        return false;
+
+        Student updated = repository.update(student);
+        return updated != null;
     }
     public boolean deleteStudent(int id) {
-        Student student = getStudentById(id);
-        if (student != null) {
-            students.remove(student);
-            System.out.println("Deleted student ID " + id);
-            return true;
-        }
-        return false;
+        return repository.deleteById(id);
     }
-    public int getStudentCount() {
-        return students.size();
+    public int getTotalStudents() {
+        return repository.count();
     }
+    public boolean studentExists(int id) {
+        return repository.existsById(id);
+    }
+
     public void displayAllStudents() {
+        List<Student> students = repository.findAll();
+
         if (students.isEmpty()) {
-            System.out.println("No students available.");
+            System.out.println("📭 No students found!");
             return;
         }
-        System.out.println("All Students:");
+
+        System.out.println("\n📚 All Students:");
+        System.out.println("═══════════════════════════════════════");
         for (Student student : students) {
             System.out.println(student);
+            System.out.println("───────────────────────────────────────");
         }
     }
 
