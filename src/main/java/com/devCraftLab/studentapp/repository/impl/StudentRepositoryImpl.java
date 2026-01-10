@@ -1,5 +1,6 @@
 package com.devCraftLab.studentapp.repository.impl;
 
+import com.devCraftLab.studentapp.database.DatabaseService;
 import com.devCraftLab.studentapp.model.Student;
 import com.devCraftLab.studentapp.repository.StudentRepository;
 
@@ -8,28 +9,38 @@ import java.util.List;
 
 public class StudentRepositoryImpl implements StudentRepository {
     private List<Student> database;
+    private DatabaseService databaseService; // 🔴 NEW DEPENDENCY
 
-    public StudentRepositoryImpl() {
+    // 🔴 Constructor now needs DatabaseService
+    public StudentRepositoryImpl(DatabaseService databaseService) {
+        this.databaseService = databaseService;
         this.database = new ArrayList<>();
-        System.out.println("Repository initialized with database.");
+        System.out.println("📦 StudentRepository initialized with DatabaseService");
     }
     @Override
     public Student save(Student student) {
+        // Use DatabaseService
+        databaseService.executeQuery("INSERT INTO students VALUES (...)");
+
         if (existsById(student.getId())) {
-            System.out.println("Student: " + student.getId()+" already exists.");
+            System.out.println("⚠️  Student with ID " + student.getId() + " already exists!");
             return null;
         }
+
         database.add(student);
-        System.out.println("Saved student: " + student.getName());
+        System.out.println("💾 Saved to database: " + student.getName());
         return student;
     }
 
     @Override
     public List<Student> findAll() {
-        return new ArrayList<>(database); //why doing this?
+        databaseService.executeQuery("SELECT * FROM students");
+        return new ArrayList<>(database);
     }
+
     @Override
     public Student findById(int id) {
+        databaseService.executeQuery("SELECT * FROM students WHERE id = " + id);
         for (Student student : database) {
             if (student.getId() == id) {
                 return student;
@@ -39,28 +50,36 @@ public class StudentRepositoryImpl implements StudentRepository {
     }
     @Override
     public Student update(Student student) {
-        Student existingStudent = findById(student.getId());
-       if(existingStudent == null){
-           System.out.println("Student: " + student.getId()+" not found for update.");
-           return null;
-       }
-       existingStudent.setName(student.getName());
-       existingStudent.setCourse(student.getCourse());
-       existingStudent.setAge(student.getAge());
-       System.out.println("Updated student: " + student.getId());
-       return existingStudent;
+        Student existing = findById(student.getId());
 
+        if (existing == null) {
+            System.out.println("⚠️  Student not found with ID: " + student.getId());
+            return null;
+        }
+
+        databaseService.executeQuery("UPDATE students SET ...");
+
+        existing.setName(student.getName());
+        existing.setCourse(student.getCourse());
+        existing.setAge(student.getAge());
+
+        System.out.println("✏️  Updated in database: " + student.getName());
+        return existing;
     }
     @Override
     public boolean deleteById(int id) {
         Student student = findById(id);
+
         if (student == null) {
             System.out.println("⚠️  Student not found with ID: " + id);
             return false;
         }
-            database.remove(student);
-            System.out.println("Deleted student ID " + id);
-            return true;
+
+        databaseService.executeQuery("DELETE FROM students WHERE id = " + id);
+
+        database.remove(student);
+        System.out.println("🗑️  Deleted from database: " + student.getName());
+        return true;
     }
     @Override
     public int count() {

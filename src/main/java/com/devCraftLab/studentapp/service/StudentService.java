@@ -14,11 +14,14 @@ public class StudentService {
     private StudentRepository studentRepository;
     private CourseRepository courseRepository;
 
-    // Constructor - manually creating repository
-    public StudentService() {
-        this.studentRepository = new StudentRepositoryImpl();
-        this.courseRepository = new CourseRepositoryImpl();
-        System.out.println("✅ StudentService initialized with 2 repositories");
+    // 🟢 Constructor Injection - receives dependencies
+    public StudentService(
+            StudentRepository studentRepository,
+            CourseRepository courseRepository
+    ) {
+        this.studentRepository = studentRepository;
+        this.courseRepository = courseRepository;
+        System.out.println("✅ StudentService initialized with injected repositories");
     }
 
     // ========== Student Operations ==========

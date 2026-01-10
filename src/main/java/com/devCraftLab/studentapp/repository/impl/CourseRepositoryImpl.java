@@ -1,23 +1,32 @@
 package com.devCraftLab.studentapp.repository.impl;
 import com.devCraftLab.studentapp.model.Course;
 import com.devCraftLab.studentapp.repository.CourseRepository;
+import com.devCraftLab.studentapp.database.DatabaseService;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
- * CourseRepositoryImpl - Implementation of CourseRepository
+ * CourseRepositoryImpl - Now depends on DatabaseService
+ *
+ * 🔴 DEPENDENCY ADDED: DatabaseService
  */
 public class CourseRepositoryImpl implements CourseRepository {
 
     private List<Course> database;
+    private DatabaseService databaseService; // 🔴 NEW DEPENDENCY
 
-    public CourseRepositoryImpl() {
+    // 🔴 Constructor now needs DatabaseService
+    public CourseRepositoryImpl(DatabaseService databaseService) {
+        this.databaseService = databaseService;
         this.database = new ArrayList<>();
-        System.out.println("📦 CourseRepository initialized");
+        System.out.println("📦 CourseRepository initialized with DatabaseService");
     }
 
     @Override
     public Course save(Course course) {
+        databaseService.executeQuery("INSERT INTO courses VALUES (...)");
+
         if (existsById(course.getId())) {
             System.out.println("⚠️  Course with ID " + course.getId() + " already exists!");
             return null;
@@ -30,11 +39,13 @@ public class CourseRepositoryImpl implements CourseRepository {
 
     @Override
     public List<Course> findAll() {
+        databaseService.executeQuery("SELECT * FROM courses");
         return new ArrayList<>(database);
     }
 
     @Override
     public Course findById(int id) {
+        databaseService.executeQuery("SELECT * FROM courses WHERE id = " + id);
         for (Course course : database) {
             if (course.getId() == id) {
                 return course;
@@ -45,6 +56,7 @@ public class CourseRepositoryImpl implements CourseRepository {
 
     @Override
     public Course findByCode(String code) {
+        databaseService.executeQuery("SELECT * FROM courses WHERE code = '" + code + "'");
         for (Course course : database) {
             if (course.getCode().equalsIgnoreCase(code)) {
                 return course;
@@ -61,6 +73,8 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("⚠️  Course not found with ID: " + course.getId());
             return null;
         }
+
+        databaseService.executeQuery("UPDATE courses SET ...");
 
         existing.setCode(course.getCode());
         existing.setName(course.getName());
@@ -79,6 +93,8 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("⚠️  Course not found with ID: " + id);
             return false;
         }
+
+        databaseService.executeQuery("DELETE FROM courses WHERE id = " + id);
 
         database.remove(course);
         System.out.println("🗑️  Course deleted: " + course.getCode());
