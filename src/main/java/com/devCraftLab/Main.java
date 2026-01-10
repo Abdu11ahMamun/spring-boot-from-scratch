@@ -1,5 +1,6 @@
 package com.devCraftLab;
 
+import com.devCraftLab.studentapp.container.SimpleDIContainer;
 import com.devCraftLab.studentapp.model.Student;
 import com.devCraftLab.studentapp.model.Course;
 import com.devCraftLab.studentapp.service.StudentService;
@@ -8,139 +9,170 @@ import com.devCraftLab.studentapp.repository.CourseRepository;
 import com.devCraftLab.studentapp.repository.impl.StudentRepositoryImpl;
 import com.devCraftLab.studentapp.repository.impl.CourseRepositoryImpl;
 import com.devCraftLab.studentapp.database.DatabaseService;
+
 public class Main {
     public static void main(String[] args) {
 
         System.out.println("╔" + "═".repeat(58) + "╗");
-        System.out.println("║" + " ".repeat(10) + "Student Management System v5.0" + " ".repeat(17) + "║");
-        System.out.println("║" + " ".repeat(15) + "(Dependency Hell!)" + " ".repeat(24) + "║");
+        System.out.println("║" + " ".repeat(10) + "Student Management System v6.0" + " ".repeat(17) + "║");
+        System.out.println("║" + " ".repeat(12) + "(With IoC Container!)" + " ".repeat(25) + "║");
         System.out.println("╚" + "═".repeat(58) + "╝\n");
 
-        System.out.println("🔴 MANUAL DEPENDENCY WIRING - WATCH THE COMPLEXITY!\n");
+        // ============================================================
+        // STEP 1: Create Container
+        // ============================================================
+        System.out.println("STEP 1: Creating IoC Container");
         System.out.println("=".repeat(60));
 
-        // 🔴 Step 1: Create DatabaseService (root dependency)
-        System.out.println("Step 1: Creating DatabaseService...");
+        SimpleDIContainer container = new SimpleDIContainer();
+
+        // ============================================================
+        // STEP 2: Register All Beans (Dependency Wiring)
+        // ============================================================
+        System.out.println("\nSTEP 2: Registering Beans (Dependency Wiring)");
+        System.out.println("=".repeat(60));
+
+        // Create and register DatabaseService
         DatabaseService databaseService = new DatabaseService("jdbc:mysql://localhost:3306/studentdb");
         databaseService.connect();
+        container.registerBean("databaseService", databaseService);
 
-        System.out.println("\n=".repeat(60));
-
-        // 🔴 Step 2: Create Repositories (depend on DatabaseService)
-        System.out.println("Step 2: Creating Repositories...");
-        System.out.println("   (Each repository needs DatabaseService)");
+        // Create and register Repositories
         StudentRepository studentRepository = new StudentRepositoryImpl(databaseService);
+        container.registerBean("studentRepository", studentRepository);
+
         CourseRepository courseRepository = new CourseRepositoryImpl(databaseService);
+        container.registerBean("courseRepository", courseRepository);
 
-        System.out.println("\n=".repeat(60));
+        // Create and register Service
+        StudentService studentService = new StudentService(studentRepository, courseRepository);
+        container.registerBean("studentService", studentService);
 
-        // 🔴 Step 3: Create Service (depends on Repositories)
-        System.out.println("Step 3: Creating StudentService...");
-        System.out.println("   (Service needs both repositories)");
-        StudentService service = new StudentService(studentRepository, courseRepository);
+        // ============================================================
+        // STEP 3: List All Beans
+        // ============================================================
+        System.out.println("\nSTEP 3: Container Status");
+        System.out.println("=".repeat(60));
+        container.listAllBeans();
+        System.out.println("📊 Total beans in container: " + container.getBeanCount());
 
-        System.out.println("\n=".repeat(60));
-        System.out.println("✅ ALL DEPENDENCIES WIRED! (Manually... 😰)");
+        // ============================================================
+        // STEP 4: Retrieve and Use Beans
+        // ============================================================
+        System.out.println("\nSTEP 4: Retrieving Beans from Container");
         System.out.println("=".repeat(60));
 
-        // Now use the service
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("SCENARIO 1: Adding Courses");
+        // Get service from container
+        StudentService service = container.getBean("studentService", StudentService.class);
+
+        if (service == null) {
+            System.out.println("❌ Failed to get StudentService from container!");
+            return;
+        }
+
+        // ============================================================
+        // STEP 5: Use the Service (Business Logic)
+        // ============================================================
+        System.out.println("\nSTEP 5: Using the Service");
         System.out.println("=".repeat(60));
 
+        // Add courses
+        System.out.println("\n➤ Adding Courses...");
         service.addCourse(new Course(1, "CS101", "Introduction to Programming", 3, "Dr. Rahman"));
         service.addCourse(new Course(2, "CS201", "Data Structures", 4, "Dr. Karim"));
 
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("SCENARIO 2: Adding Students");
-        System.out.println("=".repeat(60));
-
+        // Add students
+        System.out.println("\n➤ Adding Students...");
         service.addStudent(new Student(1, "Rahim Khan", "Not Enrolled", 22));
         service.addStudent(new Student(2, "Karim Ahmed", "Not Enrolled", 23));
 
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("SCENARIO 3: Enrolling Students");
-        System.out.println("=".repeat(60));
-
+        // Enroll students
+        System.out.println("\n➤ Enrolling Students...");
         service.enrollStudentInCourse(1, "CS101");
         service.enrollStudentInCourse(2, "CS201");
 
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("FINAL STATE");
-        System.out.println("=".repeat(60));
-
+        // Display
         service.displayAllStudents();
 
-        System.out.println("\n📊 Total Students: " + service.getTotalStudents());
-        System.out.println("📊 Total Courses: " + service.getTotalCourses());
+        // ============================================================
+        // STEP 6: Demonstrate Container Benefits
+        // ============================================================
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("STEP 6: Container Benefits Demonstration");
+        System.out.println("=".repeat(60));
+
+        // Can retrieve any bean anytime
+        System.out.println("\n➤ Retrieving DatabaseService from container...");
+        DatabaseService db = container.getBean("databaseService", DatabaseService.class);
+        System.out.println("✅ Got DatabaseService: " + db.getConnectionUrl());
+
+        // Can check if bean exists
+        System.out.println("\n➤ Checking bean existence...");
+        System.out.println("Does 'studentService' exist? " + container.containsBean("studentService"));
+        System.out.println("Does 'unknownBean' exist? " + container.containsBean("unknownBean"));
+
+        // ============================================================
+        // COMPARISON: Manual vs Container
+        // ============================================================
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("COMPARISON: Manual Wiring vs Container");
+        System.out.println("=".repeat(60));
+        printComparison();
+
+        // ============================================================
+        // WHAT'S STILL MISSING?
+        // ============================================================
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("WHAT'S STILL MANUAL? (What Spring Automates)");
+        System.out.println("=".repeat(60));
+        printWhatSpringDoes();
 
         // Cleanup
         System.out.println();
         databaseService.disconnect();
-
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("🔴 PROBLEMS WITH THIS APPROACH:");
-        System.out.println("=".repeat(60));
-        printProblems();
-
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("💡 WHAT IF WE NEED MORE SERVICES?");
-        System.out.println("=".repeat(60));
-        printWhatIfScenario();
 
         System.out.println("\n╔" + "═".repeat(58) + "╗");
         System.out.println("║" + " ".repeat(20) + "Application Ended" + " ".repeat(21) + "║");
         System.out.println("╚" + "═".repeat(58) + "╝");
     }
 
-    private static void printProblems() {
-        System.out.println("1. 🔴 Manual Dependency Chain:");
-        System.out.println("   - Must create DatabaseService first");
-        System.out.println("   - Then Repositories (need DatabaseService)");
-        System.out.println("   - Then Service (needs Repositories)");
-        System.out.println("   - Order matters! Wrong order = Compilation error");
-        System.out.println();
-        System.out.println("2. 🔴 Tight Coupling in Main:");
-        System.out.println("   - Main knows about ALL dependencies");
-        System.out.println("   - Main must manage object lifecycle");
-        System.out.println("   - Main becomes complex");
-        System.out.println();
-        System.out.println("3. 🔴 Hard to Change:");
-        System.out.println("   - Want to change DatabaseService implementation?");
-        System.out.println("   - Have to modify Main class");
-        System.out.println("   - Ripple effect throughout codebase");
-        System.out.println();
-        System.out.println("4. 🔴 Scalability Issues:");
-        System.out.println("   - Adding new service? More wiring in Main!");
-        System.out.println("   - 10 services? 50 dependencies? NIGHTMARE!");
+    private static void printComparison() {
+        System.out.println("\n🔴 MANUAL WIRING (Branch 05):");
+        System.out.println("   DatabaseService db = new DatabaseService(...);");
+        System.out.println("   StudentRepository repo1 = new StudentRepositoryImpl(db);");
+        System.out.println("   CourseRepository repo2 = new CourseRepositoryImpl(db);");
+        System.out.println("   StudentService service = new StudentService(repo1, repo2);");
+        System.out.println("   - Scattered code");
+        System.out.println("   - Hard to manage");
+        System.out.println("   - Objects not centralized");
+
+        System.out.println("\n🟢 WITH CONTAINER (Branch 06):");
+        System.out.println("   container.registerBean(\"db\", new DatabaseService(...));");
+        System.out.println("   container.registerBean(\"repo1\", new StudentRepositoryImpl(db));");
+        System.out.println("   container.registerBean(\"service\", new StudentService(...));");
+        System.out.println("   ");
+        System.out.println("   StudentService service = container.getBean(\"service\", StudentService.class);");
+        System.out.println("   - Centralized management");
+        System.out.println("   - Easy to retrieve anywhere");
+        System.out.println("   - Single source of truth");
     }
 
-    private static void printWhatIfScenario() {
-        System.out.println("Imagine we need to add:");
-        System.out.println("- EnrollmentService (needs StudentRepo + CourseRepo)");
-        System.out.println("- NotificationService (needs EmailService + SMSService)");
-        System.out.println("- EmailService (needs ConfigService)");
-        System.out.println("- SMSService (needs ConfigService + TwilioClient)");
-        System.out.println("- ReportService (needs all above services)");
-        System.out.println();
-        System.out.println("Main class would become:");
-        System.out.println("DatabaseService db = new DatabaseService(...);");
-        System.out.println("ConfigService config = new ConfigService();");
-        System.out.println("TwilioClient twilio = new TwilioClient(config);");
-        System.out.println("EmailService email = new EmailService(config);");
-        System.out.println("SMSService sms = new SMSService(config, twilio);");
-        System.out.println("StudentRepository studentRepo = new StudentRepositoryImpl(db);");
-        System.out.println("CourseRepository courseRepo = new CourseRepositoryImpl(db);");
-        System.out.println("EnrollmentService enrollment = new EnrollmentService(studentRepo, courseRepo);");
-        System.out.println("NotificationService notification = new NotificationService(email, sms);");
-        System.out.println("StudentService studentService = new StudentService(studentRepo, courseRepo);");
-        System.out.println("ReportService report = new ReportService(enrollment, notification, studentService);");
-        System.out.println();
-        System.out.println("😱 IMPOSSIBLE TO MAINTAIN!");
-        System.out.println();
-        System.out.println("💡 THIS IS WHY WE NEED:");
-        System.out.println("   - Inversion of Control (IoC)");
-        System.out.println("   - Dependency Injection Framework");
-        System.out.println("   - Spring Container!");
+    private static void printWhatSpringDoes() {
+        System.out.println("\n❌ STILL MANUAL IN OUR CONTAINER:");
+        System.out.println("1. We manually create objects: new StudentService(...)");
+        System.out.println("2. We manually resolve dependencies");
+        System.out.println("3. We manually register beans");
+        System.out.println("4. No automatic wiring");
+        System.out.println("5. No annotation support");
+
+        System.out.println("\n✅ WHAT SPRING DOES AUTOMATICALLY:");
+        System.out.println("1. Scans for @Component, @Service, @Repository");
+        System.out.println("2. Automatically creates objects");
+        System.out.println("3. Automatically resolves dependencies (@Autowired)");
+        System.out.println("4. Automatically registers in container");
+        System.out.println("5. Manages lifecycle (init, destroy)");
+        System.out.println("6. Handles singletons, prototypes, etc.");
+
+        System.out.println("\n💡 NEXT: We'll learn Spring Core to see this magic!");
     }
 }
